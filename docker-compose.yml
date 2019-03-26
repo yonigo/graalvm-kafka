@@ -1,0 +1,52 @@
+version: '3.3'
+services:
+  zookeeper:
+    image: 'confluentinc/cp-zookeeper:5.0.0'
+    hostname: zookeeper
+    ports:
+      - '2181:2181'
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+    volumes:
+      - zk-data:/var/lib/zookeeper/data
+      - zk-log:/var/lib/zookeeper/log
+  kafka-broker:
+    image: 'confluentinc/cp-kafka:5.0.0'
+    ports:
+      - '9092:9092'
+      - '9093:9093'
+    depends_on:
+      - 'zookeeper'
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: 'zookeeper:2181'
+      KAFKA_DELETE_TOPIC_ENABLE: 'true'
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://localhost:9092,PLAINTEXT2://kafka-broker:9093
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT, PLAINTEXT2:PLAINTEXT
+      KAFKA_TOPICS: "test_topic"
+      KAFKA_JMX_PORT: 4999
+      KAFKA_JMX_HOSTNAME: 0.0.0.0
+  graalvm:
+    image: 'oracle/graalvm-ce:1.0.0-rc12'
+    depends_on:
+      - 'kafka-broker'
+    volumes:
+      - ./:/code
+    environment:
+      VM: 'graalvm'
+  client-server:
+    image: 'oracle/graalvm-ce:1.0.0-rc12'
+    ports:
+      - '8080:8080'
+    volumes:
+      - ./node/services/client-server:/code
+    environment:
+      - ALLOW_EMPTY_PASSWORD=yes
+    working_dir: /code
+    command: npm run start:dev
+
+volumes:
+  zk-data:
+  zk-log:
