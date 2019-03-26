@@ -15,7 +15,7 @@ mvn package
 
 ### Run node app 
 
-dcc run graalvm bash
+docker-compose run graalvm bash
 (This will download and start all required kafka dependencies - kafka broker & zookeeper, and put you inside the container )
 
 node --polyglot --jvm --jvm.cp=code/target/uber-kafka-client-1.0.jar --experimental-worker code/node/services/kafka-user/index.js 
